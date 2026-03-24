@@ -1,0 +1,9 @@
+services:
+  google-docs-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      # Mount source code so host edits trigger hot reload
+      - ./src:/app/src:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro

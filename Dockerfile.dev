@@ -1,0 +1,21 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy package files and install all dependencies (including dev)
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copy source (will be overridden by volume mount in dev)
+COPY src/ src/
+COPY tsconfig.json ./
+
+ENV PORT=8080
+EXPOSE 8080
+
+# nodemon watches src/ for .ts changes and restarts the server.
+# tsx runs TypeScript directly without a separate build step.
+CMD npx nodemon \
+    --watch src \
+    --ext ts \
+    --exec "npx tsx src/index.ts"
