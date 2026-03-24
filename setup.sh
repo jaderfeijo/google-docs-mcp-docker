@@ -1,19 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ── Colours ──────────────────────────────────────────────────────────────────
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
+# ── Helpers ──────────────────────────────────────────────────────────────────
+info()  { printf "  > %s\n" "$*"; }
+ok()    { printf "  [ok] %s\n" "$*"; }
+warn()  { printf "  [warn] %s\n" "$*"; }
+err()   { printf "  [error] %s\n" "$*"; }
+header(){ printf "\n--- %s ---\n\n" "$*"; }
 
-info()  { printf "${CYAN}▸ %s${NC}\n" "$*"; }
-ok()    { printf "${GREEN}✔ %s${NC}\n" "$*"; }
-warn()  { printf "${YELLOW}⚠ %s${NC}\n" "$*"; }
-err()   { printf "${RED}✖ %s${NC}\n" "$*"; }
-header(){ printf "\n${BOLD}── %s ──${NC}\n\n" "$*"; }
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="${SCRIPT_DIR}/.env"
+TOKEN_FILE="${HOME}/.config/google-docs-mcp/token.json"
 
 # ── Pre-flight checks ───────────────────────────────────────────────────────
 header "Pre-flight checks"
@@ -51,7 +48,7 @@ ok "Authenticated as ${ACCOUNT}"
 header "Project setup"
 
 DEFAULT_PROJECT="gdocs-mcp-$(whoami | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9' | head -c 8)"
-read -rp "$(printf "${CYAN}▸${NC} Project ID [${DEFAULT_PROJECT}]: ")" PROJECT_ID
+read -rp "  > Project ID [${DEFAULT_PROJECT}]: " PROJECT_ID
 PROJECT_ID="${PROJECT_ID:-$DEFAULT_PROJECT}"
 
 if gcloud projects describe "$PROJECT_ID" &>/dev/null; then
@@ -84,7 +81,7 @@ if [[ "$BILLING_ENABLED" != "True" ]]; then
     printf "    %-22s %s\n" "$id" "$name"
   done
   echo ""
-  read -rp "$(printf "${CYAN}▸${NC} Billing account ID: ")" BILLING_ACCOUNT
+  read -rp "  > Billing account ID: " BILLING_ACCOUNT
   gcloud billing projects link "$PROJECT_ID" --billing-account="$BILLING_ACCOUNT" --quiet
   ok "Billing linked"
 else
@@ -95,49 +92,59 @@ fi
 header "Enabling APIs"
 
 for API in docs.googleapis.com sheets.googleapis.com drive.googleapis.com; do
-  info "Enabling ${API}..."
-  gcloud services enable "$API" --quiet
-  ok "${API} enabled"
+  if gcloud services list --enabled --project="$PROJECT_ID" --format="value(config.name)" 2>/dev/null | grep -q "^${API}$"; then
+    ok "${API} already enabled"
+  else
+    info "Enabling ${API}..."
+    gcloud services enable "$API" --quiet
+    ok "${API} enabled"
+  fi
 done
 
-# ── Manual step: OAuth consent screen + client credentials ───────────────────
-header "Manual step required"
+# ── OAuth credentials ────────────────────────────────────────────────────────
+header "OAuth credentials"
 
-CONSOLE_URL="https://console.cloud.google.com/apis/credentials?project=${PROJECT_ID}"
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
 
-cat <<EOF
-${YELLOW}Google does not support creating Desktop OAuth client IDs via the CLI.${NC}
-${YELLOW}You need to complete two steps in the Cloud Console:${NC}
+# Check if .env already has valid credentials
+if [[ -f "$ENV_FILE" ]]; then
+  EXISTING_ID=$(grep -E '^GOOGLE_CLIENT_ID=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)
+  EXISTING_SECRET=$(grep -E '^GOOGLE_CLIENT_SECRET=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)
 
-${BOLD}Step 1: Configure the OAuth consent screen${NC}
-  1. Open: ${CYAN}https://console.cloud.google.com/apis/credentials/consent?project=${PROJECT_ID}${NC}
-  2. Select ${BOLD}External${NC} user type, click Create
-  3. Fill in app name (e.g. "Google Docs MCP") and your email
-  4. Click ${BOLD}Save and Continue${NC} through the remaining steps
+  if [[ -n "$EXISTING_ID" && "$EXISTING_ID" != "your-client-id.apps.googleusercontent.com" && \
+        -n "$EXISTING_SECRET" && "$EXISTING_SECRET" != "your-client-secret" ]]; then
+    GOOGLE_CLIENT_ID="$EXISTING_ID"
+    GOOGLE_CLIENT_SECRET="$EXISTING_SECRET"
+    ok "Credentials loaded from ${ENV_FILE}"
+  fi
+fi
 
-${BOLD}Step 2: Create OAuth client credentials${NC}
-  1. Open: ${CYAN}${CONSOLE_URL}${NC}
-  2. Click ${BOLD}Create Credentials → OAuth client ID${NC}
-  3. Application type: ${BOLD}Desktop app${NC}
-  4. Name: anything you like (e.g. "google-docs-mcp")
-  5. Click ${BOLD}Create${NC}
-  6. Copy the ${BOLD}Client ID${NC} and ${BOLD}Client Secret${NC}
+if [[ -z "$GOOGLE_CLIENT_ID" || -z "$GOOGLE_CLIENT_SECRET" ]]; then
+  CONSOLE_URL="https://console.cloud.google.com/apis/credentials?project=${PROJECT_ID}"
+
+  cat <<EOF
+
+  No credentials found locally. Your OAuth Client ID and Secret already
+  exist in your GCP project -- you just need to copy them to this machine.
+
+  1. Open: ${CONSOLE_URL}
+  2. Under "OAuth 2.0 Client IDs", click on your client name
+  3. Copy the Client ID and Client Secret and paste them below
 
 EOF
 
-read -rp "$(printf "${CYAN}▸${NC} Paste your Client ID: ")" GOOGLE_CLIENT_ID
-read -rp "$(printf "${CYAN}▸${NC} Paste your Client Secret: ")" GOOGLE_CLIENT_SECRET
+  read -rp "  > Paste your Client ID: " GOOGLE_CLIENT_ID
+  read -rp "  > Paste your Client Secret: " GOOGLE_CLIENT_SECRET
 
-if [[ -z "$GOOGLE_CLIENT_ID" || -z "$GOOGLE_CLIENT_SECRET" ]]; then
-  err "Client ID and Secret are required."
-  exit 1
+  if [[ -z "$GOOGLE_CLIENT_ID" || -z "$GOOGLE_CLIENT_SECRET" ]]; then
+    err "Client ID and Secret are required."
+    exit 1
+  fi
 fi
 
 # ── Write .env ───────────────────────────────────────────────────────────────
 header "Writing .env"
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="${SCRIPT_DIR}/.env"
 
 cat > "$ENV_FILE" <<EOF
 GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -148,41 +155,51 @@ EOF
 ok "Credentials written to ${ENV_FILE}"
 
 # ── OAuth token ──────────────────────────────────────────────────────────────
-header "Authorising with Google (one-time)"
+header "Authorising with Google"
 
-info "A browser window will open for the OAuth flow..."
-GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
-GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
-npx -y @a-bonus/google-docs-mcp auth
-
-TOKEN_FILE="${HOME}/.config/google-docs-mcp/token.json"
 if [[ -f "$TOKEN_FILE" ]]; then
-  ok "Token saved to ${TOKEN_FILE}"
+  ok "OAuth token already exists at ${TOKEN_FILE}"
 else
-  err "Token file not found at ${TOKEN_FILE}. Auth may have failed."
-  exit 1
+  info "A browser window will open for the OAuth flow..."
+  GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
+  GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
+  npx -y @a-bonus/google-docs-mcp auth
+
+  if [[ -f "$TOKEN_FILE" ]]; then
+    ok "Token saved to ${TOKEN_FILE}"
+  else
+    err "Token file not found at ${TOKEN_FILE}. Auth may have failed."
+    exit 1
+  fi
 fi
 
 # ── Build & start ────────────────────────────────────────────────────────────
 header "Building and starting Docker container"
 
 cd "$SCRIPT_DIR"
-docker compose build
-ok "Image built"
 
-docker compose up -d
-ok "Container started"
+# Check if container is already running
+RUNNING=$(docker compose ps --status running --format '{{.Name}}' 2>/dev/null || true)
+if [[ -n "$RUNNING" ]]; then
+  ok "Container already running: ${RUNNING}"
+else
+  docker compose build
+  ok "Image built"
+
+  docker compose up -d
+  ok "Container started"
+fi
 
 # ── Done ─────────────────────────────────────────────────────────────────────
 header "Setup complete"
 
 cat <<EOF
-${GREEN}The MCP server is running at: ${BOLD}http://localhost:8080/sse${NC}
+  The MCP server is running at: http://localhost:8080/sse
 
-${CYAN}Useful commands:${NC}
-  make logs      View logs (Ctrl+C to pause, Shift+F to resume, q to quit)
-  make stop      Stop the server
-  make start     Start the server
-  make restart   Restart the server
-  make status    Show container status
+  Useful commands:
+    make logs      View logs (Ctrl+C to pause, Shift+F to resume, q to quit)
+    make stop      Stop the server
+    make start     Start the server
+    make restart   Restart the server
+    make status    Show container status
 EOF

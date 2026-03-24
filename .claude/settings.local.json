@@ -13,7 +13,9 @@
       "Bash(docker port:*)",
       "Bash(curl -s -4 -X POST http://127.0.0.1:8080/mcp -H 'Content-Type: application/json' -H 'Accept: text/event-stream' -d '{\"\"jsonrpc\"\":\"\"2.0\"\",\"\"method\"\":\"\"initialize\"\",\"\"id\"\":1,\"\"params\"\":{\"\"protocolVersion\"\":\"\"2024-11-05\"\",\"\"capabilities\"\":{},\"\"clientInfo\"\":{\"\"name\"\":\"\"test\"\",\"\"version\"\":\"\"0.1\"\"}}}' --max-time 10)",
       "Bash(curl -s http://localhost:8080/mcp --max-time 5)",
-      "Bash(curl -s -X POST http://localhost:8080/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d '{\"\"jsonrpc\"\":\"\"2.0\"\",\"\"method\"\":\"\"initialize\"\",\"\"id\"\":1,\"\"params\"\":{\"\"protocolVersion\"\":\"\"2024-11-05\"\",\"\"capabilities\"\":{},\"\"clientInfo\"\":{\"\"name\"\":\"\"test\"\",\"\"version\"\":\"\"0.1\"\"}}}' --max-time 10)"
+      "Bash(curl -s -X POST http://localhost:8080/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d '{\"\"jsonrpc\"\":\"\"2.0\"\",\"\"method\"\":\"\"initialize\"\",\"\"id\"\":1,\"\"params\"\":{\"\"protocolVersion\"\":\"\"2024-11-05\"\",\"\"capabilities\"\":{},\"\"clientInfo\"\":{\"\"name\"\":\"\"test\"\",\"\"version\"\":\"\"0.1\"\"}}}' --max-time 10)",
+      "Bash(npm ls:*)",
+      "Bash(make build:*)"
     ]
   }
 }
