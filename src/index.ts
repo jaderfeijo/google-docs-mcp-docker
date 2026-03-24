@@ -14,6 +14,7 @@ import { initializeGoogleClient } from '@a-bonus/google-docs-mcp/dist/clients.js
 import { registerAllTools } from '@a-bonus/google-docs-mcp/dist/tools/index.js';
 import { logger } from '@a-bonus/google-docs-mcp/dist/logger.js';
 import { registerFootnoteTools } from './tools/docs/footnotes/index.js';
+import { registerTableTools } from './tools/docs/tables/index.js';
 
 // --- Auth subcommand ---
 if (process.argv[2] === 'auth') {
@@ -47,8 +48,9 @@ collectToolsWhileRegistering(server, registeredTools);
 // Register all upstream tools (44 tools)
 registerAllTools(server);
 
-// Register our custom footnote tools
+// Register our custom tools
 registerFootnoteTools(server);
+registerTableTools(server);
 
 try {
   await initializeGoogleClient();

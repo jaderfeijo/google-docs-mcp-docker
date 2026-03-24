@@ -15,7 +15,16 @@
       "Bash(curl -s http://localhost:8080/mcp --max-time 5)",
       "Bash(curl -s -X POST http://localhost:8080/mcp -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d '{\"\"jsonrpc\"\":\"\"2.0\"\",\"\"method\"\":\"\"initialize\"\",\"\"id\"\":1,\"\"params\"\":{\"\"protocolVersion\"\":\"\"2024-11-05\"\",\"\"capabilities\"\":{},\"\"clientInfo\"\":{\"\"name\"\":\"\"test\"\",\"\"version\"\":\"\"0.1\"\"}}}' --max-time 10)",
       "Bash(npm ls:*)",
-      "Bash(make build:*)"
+      "Bash(make build:*)",
+      "Bash(docker exec google-docs-mcp node -e \":*)",
+      "Bash(docker exec:*)",
+      "Bash(curl -s --max-time 5 -N http://localhost:8080/mcp -H \"Content-Type: application/json\" -H \"Accept: application/json, text/event-stream\" -d '{\"\"jsonrpc\"\":\"\"2.0\"\",\"\"id\"\":1,\"\"method\"\":\"\"initialize\"\",\"\"params\"\":{\"\"protocolVersion\"\":\"\"2025-03-26\"\",\"\"capabilities\"\":{},\"\"clientInfo\"\":{\"\"name\"\":\"\"test\"\",\"\"version\"\":\"\"1.0\"\"}}}')",
+      "Bash(SESSION_ID=\"f4a27348-18a1-4016-8020-e24b830a0d9d\" curl -s --max-time 10 -N http://localhost:8080/mcp -H \"Content-Type: application/json\" -H \"Accept: application/json, text/event-stream\" -H \"Mcp-Session-Id: $SESSION_ID\" -d '{\"\"\"\"jsonrpc\"\"\"\":\"\"\"\"2.0\"\"\"\",\"\"\"\"id\"\"\"\":2,\"\"\"\"method\"\"\"\":\"\"\"\"tools/list\"\"\"\",\"\"\"\"params\"\"\"\":{}}')",
+      "Bash(SESSION_ID=\"f4a27348-18a1-4016-8020-e24b830a0d9d\")",
+      "Bash(curl -s --max-time 10 -N http://localhost:8080/mcp -H \"Content-Type: application/json\" -H \"Accept: application/json, text/event-stream\" -H \"Mcp-Session-Id: $SESSION_ID\" -d '{\"\"jsonrpc\"\":\"\"2.0\"\",\"\"id\"\":2,\"\"method\"\":\"\"tools/list\"\",\"\"params\"\":{}}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s --max-time 10 -N \"https://ae80-140-228-37-120.ngrok-free.app/mcp\" -H \"Content-Type: application/json\" -H \"Accept: application/json, text/event-stream\" -d '{\"\"jsonrpc\"\":\"\"2.0\"\",\"\"id\"\":1,\"\"method\"\":\"\"initialize\"\",\"\"params\"\":{\"\"protocolVersion\"\":\"\"2025-03-26\"\",\"\"capabilities\"\":{},\"\"clientInfo\"\":{\"\"name\"\":\"\"test\"\",\"\"version\"\":\"\"1.0\"\"}}}')",
+      "Bash(SESSION=\"160b7404-fd4e-4c9a-a3df-f560bc814373\" curl -s --max-time 10 \"https://ae80-140-228-37-120.ngrok-free.app/mcp\" -H \"Content-Type: application/json\" -H \"Accept: application/json, text/event-stream\" -H \"Mcp-Session-Id: $SESSION\" -d '{\"\"\"\"jsonrpc\"\"\"\":\"\"\"\"2.0\"\"\"\",\"\"\"\"id\"\"\"\":2,\"\"\"\"method\"\"\"\":\"\"\"\"tools/list\"\"\"\",\"\"\"\"params\"\"\"\":{}}')"
     ]
   }
 }
