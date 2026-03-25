@@ -5,10 +5,7 @@
 setup:
 	./setup.sh
 
-compile:
-	npx tsc
-
-build: compile
+build:
 	docker compose build
 
 start:
