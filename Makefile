@@ -1,4 +1,4 @@
-.PHONY: setup build start stop restart logs status clean compile dev dev-build dev-stop dev-logs
+.PHONY: setup build start stop restart logs status clean compile dev dev-build dev-stop dev-logs preflight
 
 # --- Production ---
 
@@ -24,6 +24,9 @@ status:
 
 clean:
 	docker compose down --rmi local --volumes
+
+preflight:
+	./preflight.sh
 
 # --- Development (hot reload) ---
 
