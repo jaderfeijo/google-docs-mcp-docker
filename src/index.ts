@@ -42,6 +42,26 @@ const server = new FastMCP({
   version: '1.0.0',
 });
 
+// Wrap addTool to inject action/error logging for every tool
+const originalAddTool = server.addTool.bind(server);
+server.addTool = (toolDef: any) => {
+  const originalExecute = toolDef.execute;
+  toolDef.execute = async (args: any, context: any) => {
+    const toolName = toolDef.name;
+    logger.info(`[${toolName}] called with args: ${JSON.stringify(args)}`);
+    try {
+      const result = await originalExecute(args, context);
+      const json = JSON.stringify(result) ?? 'undefined';
+      logger.info(`[${toolName}] completed: ${json.slice(0, 200)}`);
+      return result;
+    } catch (error: any) {
+      logger.info(`[${toolName}] ERROR: ${error.message || error}`);
+      throw error;
+    }
+  };
+  return originalAddTool(toolDef);
+};
+
 const registeredTools: any[] = [];
 collectToolsWhileRegistering(server, registeredTools);
 
