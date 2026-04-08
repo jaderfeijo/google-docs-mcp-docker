@@ -15,6 +15,7 @@ import { registerAllTools } from '@a-bonus/google-docs-mcp/dist/tools/index.js';
 import { logger } from '@a-bonus/google-docs-mcp/dist/logger.js';
 import { registerFootnoteTools } from './tools/docs/footnotes/index.js';
 import { registerTableTools } from './tools/docs/tables/index.js';
+import { registerCommentTools } from './tools/docs/comments/index.js';
 
 // --- Auth subcommand ---
 if (process.argv[2] === 'auth') {
@@ -71,6 +72,9 @@ registerAllTools(server);
 // Register our custom tools
 registerFootnoteTools(server);
 registerTableTools(server);
+
+// Register custom comment tools (overrides upstream addComment with corrected anchor format)
+registerCommentTools(server);
 
 try {
   await initializeGoogleClient();
