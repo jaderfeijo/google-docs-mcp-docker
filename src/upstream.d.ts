@@ -62,3 +62,12 @@ declare module '@a-bonus/google-docs-mcp/dist/googleDocsApiHelpers.js' {
     tabId?: string
   ): Promise<any>;
 }
+
+declare module '@a-bonus/google-docs-mcp/dist/markdown-transformer/markdownToDocs.js' {
+	export function convertMarkdownToRequests(
+		markdown: string,
+		startIndex?: number,
+		tabId?: string,
+		options?: { firstHeadingAsTitle?: boolean }
+	): any[];
+}
