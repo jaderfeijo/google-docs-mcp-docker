@@ -10,25 +10,30 @@ import {
 } from '@a-bonus/google-docs-mcp/dist/googleDocsApiHelpers.js';
 import { convertMarkdownToRequests } from '@a-bonus/google-docs-mcp/dist/markdown-transformer/markdownToDocs.js';
 
-const TargetSchema = z.discriminatedUnion('mode', [
-	z.object({
-		mode: z.literal('append'),
-	}),
-	z.object({
-		mode: z.literal('replaceDocument'),
-		preserveFirstParagraph: z.boolean().optional().default(false),
-	}),
-	z
-		.object({
+const TargetSchema = z
+	.discriminatedUnion('mode', [
+		z.object({
+			mode: z.literal('append'),
+		}),
+		z.object({
+			mode: z.literal('replaceDocument'),
+			preserveFirstParagraph: z.boolean().optional().default(false),
+		}),
+		z.object({
 			mode: z.literal('replaceRange'),
 			startIndex: z.number().int().min(1),
 			endIndex: z.number().int().min(1),
-		})
-		.refine((v) => v.endIndex > v.startIndex, {
+		}),
+	])
+	.superRefine((value, ctx) => {
+		if (value.mode !== 'replaceRange') return;
+		if (value.endIndex > value.startIndex) return;
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
 			message: 'endIndex must be greater than startIndex',
 			path: ['endIndex'],
-		}),
-]);
+		});
+	});
 
 const Parameters = DocumentIdParameter.extend({
 	markdown: z.string().min(1).describe('Markdown content to apply.'),
